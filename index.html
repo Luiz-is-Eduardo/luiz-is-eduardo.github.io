@@ -78,7 +78,7 @@
         ➕ Emitir Novo Pedido
       </button>
       <div class="text-[11px] text-slate-400 flex items-center justify-between">
-        <span class="flex items-center gap-1.5" id="conexao-status">
+        <span class="flex items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> Sheets Conectado
         </span>
         <button onclick="carregarDados(true)" class="text-purple-400 hover:underline">Atualizar</button>
@@ -86,7 +86,7 @@
     </div>
   </aside>
 
-  <!-- CONTEÚDO PRINCIPAL -->
+  <!-- ÁREA PRINCIPAL -->
   <main class="flex-1 flex flex-col min-w-0">
     <header class="hidden md:flex h-16 bg-white border-b border-slate-200 px-8 items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
@@ -104,7 +104,7 @@
       <section id="tab-dashboard" class="space-y-6">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <span class="text-xs font-semibold text-slate-400 uppercase">Faturamento</span>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Faturamento Total</span>
             <div class="text-lg md:text-2xl font-extrabold text-slate-900 mt-1" id="kpi-faturamento">R$ 0,00</div>
             <span class="text-[11px] text-emerald-600 font-semibold block mt-1">Total de vendas</span>
           </div>
@@ -154,7 +154,7 @@
                     <th class="py-2">Pedido</th>
                     <th class="py-2">Cliente</th>
                     <th class="py-2">Valor</th>
-                    <th class="py-2 text-center">Status (Clique)</th>
+                    <th class="py-2 text-center">Status</th>
                     <th class="py-2 text-right">Ação</th>
                   </tr>
                 </thead>
@@ -183,7 +183,7 @@
                 <th class="p-3.5">Cliente</th>
                 <th class="p-3.5">Vencimento</th>
                 <th class="p-3.5">Total</th>
-                <th class="p-3.5 text-center">Status (Clique p/ mudar)</th>
+                <th class="p-3.5 text-center">Status (Clique p/ alternar)</th>
                 <th class="p-3.5 text-center">Comprovante</th>
               </tr>
             </thead>
@@ -232,7 +232,7 @@
     </div>
   </main>
 
-  <!-- MODAL 1: NOVO PEDIDO -->
+  <!-- MODAL: NOVO PEDIDO -->
   <div id="modal-pedido" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div class="p-4 border-b flex items-center justify-between bg-slate-50">
@@ -280,7 +280,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: COMPROVANTE (PDF) -->
+  <!-- MODAL: COMPROVANTE (PDF) -->
   <div id="modal-comprovante" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
       <div class="p-4 border-b flex items-center justify-between bg-slate-50 no-print">
@@ -389,7 +389,16 @@
     let pedidoAtualComprovante = null;
     let carrinho = [];
 
-    const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    // Parser Numérico Estrito
+    function parseNumero(valor) {
+      if (typeof valor === 'number') return isNaN(valor) ? 0 : valor;
+      if (!valor) return 0;
+      let s = String(valor).replace(/[R$\s.]/g, '').replace(',', '.');
+      let n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    const fmt = (v) => parseNumero(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     function toggleMobileMenu() {
       document.getElementById('sidebar').classList.toggle('hidden');
@@ -424,10 +433,13 @@
     function renderizar() {
       let fat = 0, pago = 0, pend = 0;
       bancoDados.pedidos.forEach(p => {
-        const val = Number(p.total) || 0;
+        const val = parseNumero(p.total);
         fat += val;
-        if (p.status === "Pago") pago += val;
-        else pend += val;
+        if (String(p.status).toLowerCase() === "pago") {
+          pago += val;
+        } else {
+          pend += val;
+        }
       });
 
       document.getElementById('kpi-faturamento').innerText = fmt(fat);
@@ -436,30 +448,31 @@
       document.getElementById('kpi-ticket').innerText = fmt(bancoDados.pedidos.length ? (fat / bancoDados.pedidos.length) : 0);
       document.getElementById('kpi-qtd-pedidos').innerText = bancoDados.pedidos.length + " pedidos realizados";
 
-      // Alerta Estoque
+      // Alerta de Estoque
       const alertaBody = document.getElementById('lista-alerta-estoque');
       alertaBody.innerHTML = '';
-      bancoDados.produtos.filter(p => p.estoque <= 25).forEach(p => {
+      bancoDados.produtos.filter(p => Number(p.estoque) <= 25).forEach(p => {
         alertaBody.innerHTML += `
           <tr>
             <td class="py-2 font-mono text-xs text-slate-400">${p.sku}</td>
             <td class="py-2 font-medium text-slate-800">${p.nome}</td>
-            <td class="py-2 text-right font-bold ${p.estoque <= 20 ? 'text-rose-600' : 'text-amber-600'}">${p.estoque} un</td>
+            <td class="py-2 text-right font-bold ${Number(p.estoque) <= 20 ? 'text-rose-600' : 'text-amber-600'}">${p.estoque} un</td>
           </tr>
         `;
       });
 
-      // Últimos Pedidos no Dashboard
+      // Últimos Pedidos
       const ultimosBody = document.getElementById('lista-ultimos-pedidos');
       ultimosBody.innerHTML = '';
       bancoDados.pedidos.slice(-5).reverse().forEach(p => {
+        const isPago = String(p.status).toLowerCase() === 'pago';
         ultimosBody.innerHTML += `
           <tr class="hover:bg-slate-50">
             <td class="py-2 font-mono font-bold text-purple-600 text-xs">${p.id}</td>
             <td class="py-2 text-slate-700">${p.cliente}</td>
             <td class="py-2 font-bold">${fmt(p.total)}</td>
             <td class="py-2 text-center">
-              <button onclick="alternarStatus('${p.id}')" title="Clique para alternar status" class="text-xs px-2 py-0.5 rounded-full font-bold cursor-pointer transition ${p.status === 'Pago' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
+              <button onclick="alternarStatus('${p.id}')" title="Clique para alternar status" class="text-xs px-2 py-0.5 rounded-full font-bold cursor-pointer transition ${isPago ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
                 ${p.status}
               </button>
             </td>
@@ -474,7 +487,7 @@
 
       filtrarPedidos();
 
-      // Produtos
+      // Tabela de Produtos
       const estBody = document.getElementById('tabela-estoque-body');
       estBody.innerHTML = '';
       bancoDados.produtos.forEach(p => {
@@ -486,7 +499,7 @@
             <td class="p-3.5 text-right font-bold">${fmt(p.preco)}</td>
             <td class="p-3.5 text-center font-bold">${p.estoque} un</td>
             <td class="p-3.5 text-center">
-              <span class="text-xs px-2 py-0.5 rounded-full ${p.estoque <= 20 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
+              <span class="text-xs px-2 py-0.5 rounded-full ${Number(p.estoque) <= 20 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
                 ${p.statusEstoque}
               </span>
             </td>
@@ -494,7 +507,7 @@
         `;
       });
 
-      // Clientes
+      // Tabela de Clientes
       const cliBody = document.getElementById('tabela-clientes-body');
       cliBody.innerHTML = '';
       bancoDados.clientes.forEach(c => {
@@ -502,9 +515,9 @@
           <tr class="hover:bg-slate-50">
             <td class="p-3.5 font-mono font-bold text-purple-600 text-xs">${c.id}</td>
             <td class="p-3.5 font-bold text-slate-800">${c.nome}</td>
-            <td class="p-3.5 font-mono text-xs text-slate-500">${c.cpf}</td>
-            <td class="p-3.5 text-slate-600">${c.contato}</td>
-            <td class="p-3.5 text-xs text-slate-500">${c.endereco}</td>
+            <td class="p-3.5 font-mono text-xs text-slate-500">${c.cpf || '-'}</td>
+            <td class="p-3.5 text-slate-600">${c.contato || '-'}</td>
+            <td class="p-3.5 text-xs text-slate-500">${c.endereco || '-'} ${c.cidade ? ' - ' + c.cidade : ''}</td>
           </tr>
         `;
       });
@@ -520,6 +533,7 @@
         .filter(p => p.cliente.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))
         .slice().reverse()
         .forEach(p => {
+          const isPago = String(p.status).toLowerCase() === 'pago';
           body.innerHTML += `
             <tr class="hover:bg-slate-50">
               <td class="p-3.5 font-mono font-bold text-purple-600">${p.id}</td>
@@ -528,7 +542,7 @@
               <td class="p-3.5 text-slate-500">${p.vencimento}</td>
               <td class="p-3.5 font-extrabold text-slate-900">${fmt(p.total)}</td>
               <td class="p-3.5 text-center">
-                <button onclick="alternarStatus('${p.id}')" title="Clique para mudar o status" class="text-xs px-2.5 py-1 rounded-full font-bold transition shadow-sm cursor-pointer ${p.status === 'Pago' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
+                <button onclick="alternarStatus('${p.id}')" title="Clique para mudar o status" class="text-xs px-2.5 py-1 rounded-full font-bold transition shadow-sm cursor-pointer ${isPago ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
                   ${p.status} ⇄
                 </button>
               </td>
@@ -542,12 +556,12 @@
         });
     }
 
-    // ALTERAR STATUS DE PAGAMENTO (GRAVA NO SHEETS)
+    // ALTERA STATUS NA PLANILHA
     async function alternarStatus(pedidoId) {
       const ped = bancoDados.pedidos.find(p => p.id === pedidoId);
       if (!ped) return;
 
-      const novoStatus = ped.status === "Pago" ? "Pendente" : "Pago";
+      const novoStatus = String(ped.status).toLowerCase() === "pago" ? "Pendente" : "Pago";
       ped.status = novoStatus;
       renderizar();
 
@@ -581,8 +595,9 @@
 
     function atualizarBotaoStatusComprovante(status) {
       const btn = document.getElementById('comp-status-btn');
+      const isPago = String(status).toLowerCase() === 'pago';
       btn.innerText = status + " (Clique p/ mudar)";
-      btn.className = `px-2 py-0.5 rounded font-bold text-xs cursor-pointer ${status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+      btn.className = `px-2 py-0.5 rounded font-bold text-xs cursor-pointer ${isPago ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
     }
 
     // COMPROVANTE
@@ -591,7 +606,7 @@
       if (!ped) return;
       pedidoAtualComprovante = ped;
 
-      const cli = bancoDados.clientes.find(c => c.id === ped.idCliente || c.nome === ped.cliente) || {
+      const cli = bancoDados.clientes.find(c => c.id === ped.idCliente || c.nome.toLowerCase() === ped.cliente.toLowerCase()) || {
         id: ped.idCliente || '-',
         nome: ped.cliente,
         cpf: '-',
@@ -615,7 +630,7 @@
       tbody.innerHTML = '';
       
       const itens = (ped.itens && ped.itens.length > 0) ? ped.itens : [
-        { sku: "DIVERSOS", nome: "Produtos diversos referente ao pedido " + ped.id, quantidade: 1, precoUnitario: ped.total, subtotal: ped.total }
+        { sku: "DIVERSOS", nome: "Itens referentes ao pedido " + ped.id, quantidade: 1, precoUnitario: ped.total, subtotal: ped.total }
       ];
 
       itens.forEach(it => {
@@ -642,7 +657,7 @@
     function popularSelects() {
       const sc = document.getElementById('modal-select-cliente');
       sc.innerHTML = '<option value="">Selecione o Cliente...</option>';
-      bancoDados.clientes.forEach(c => sc.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+      bancoDados.clientes.forEach(c => sc.innerHTML += `<option value="${c.id}">${c.nome} (${c.id})</option>`);
 
       const sp = document.getElementById('modal-select-produto');
       sp.innerHTML = '<option value="">Escolha um produto...</option>';
@@ -661,16 +676,17 @@
 
     function adicionarItemAoPedido() {
       const sku = document.getElementById('modal-select-produto').value;
-      const qtd = parseInt(document.getElementById('modal-qtd-item').value) || 1;
+      const qtd = parseInt(document.getElementById('modal-qtd-item').value, 10) || 1;
       if (!sku) return alert("Selecione um produto primeiro!");
 
       const prod = bancoDados.produtos.find(p => p.sku === sku);
+      const preco = parseNumero(prod.preco);
       const ex = carrinho.find(i => i.sku === sku);
       if (ex) {
         ex.qtd += qtd;
-        ex.subtotal = ex.qtd * prod.preco;
+        ex.subtotal = ex.qtd * preco;
       } else {
-        carrinho.push({ sku: prod.sku, nome: prod.nome, preco: prod.preco, qtd: qtd, subtotal: prod.preco * qtd });
+        carrinho.push({ sku: prod.sku, nome: prod.nome, preco: preco, qtd: qtd, subtotal: preco * qtd });
       }
       atualizarCarrinho();
     }
@@ -707,7 +723,7 @@
       if (!carrinho.length) return alert("Adicione ao menos um item ao pedido!");
 
       const cli = bancoDados.clientes.find(c => c.id === idCli);
-      const tot = carrinho.reduce((a, b) => a + b.subtotal, 0);
+      const tot = carrinho.reduce((a, b) => a + parseNumero(b.subtotal), 0);
       const novoId = "PED-" + (1001 + bancoDados.pedidos.length);
       const hoje = new Date().toISOString().substring(0, 10);
 
@@ -752,7 +768,7 @@
       bancoDados.pedidos.push(novoPedido);
       carrinho.forEach(item => {
         const prod = bancoDados.produtos.find(p => p.sku === item.sku);
-        if (prod) prod.estoque = Math.max(0, prod.estoque - item.qtd);
+        if (prod) prod.estoque = Math.max(0, Number(prod.estoque) - item.qtd);
       });
 
       fecharModalPedido();
