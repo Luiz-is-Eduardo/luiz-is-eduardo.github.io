@@ -4,16 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rei dos Gelatos & Açaí • Distribuidora B2B</title>
-  <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    @media print {
+      body * { visibility: hidden; }
+      #comprovante-print-area, #comprovante-print-area * { visibility: visible; }
+      #comprovante-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        padding: 0 !important;
+      }
+      .no-print { display: none !important; }
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col md:flex-row">
 
-  <!-- CABEÇALHO MOBILE (Só aparece em celulares) -->
+  <!-- CABEÇALHO MOBILE -->
   <header class="md:hidden bg-slate-900 text-white p-4 flex items-center justify-between sticky top-0 z-30 shadow">
     <div class="flex items-center gap-2">
       <span class="text-2xl">🍧</span>
@@ -67,7 +79,7 @@
       </button>
       <div class="text-[11px] text-slate-400 flex items-center justify-between">
         <span class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Sistema Ativo
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> Sheets Conectado
         </span>
         <button onclick="carregarDados()" class="text-purple-400 hover:underline">Atualizar</button>
       </div>
@@ -76,7 +88,6 @@
 
   <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
   <main class="flex-1 flex flex-col min-w-0">
-    <!-- Topbar Desktop -->
     <header class="hidden md:flex h-16 bg-white border-b border-slate-200 px-8 items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
         <h2 id="page-title" class="text-lg font-bold text-slate-800">Dashboard Executivo</h2>
@@ -87,22 +98,20 @@
       <div class="text-xs text-slate-500 font-medium" id="current-date">--/--/----</div>
     </header>
 
-    <!-- Conteúdo das Abas -->
     <div class="p-4 md:p-8 space-y-6">
       
       <!-- ABA 1: DASHBOARD -->
       <section id="tab-dashboard" class="space-y-6">
-        <!-- Cards de Indicadores -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Faturamento</span>
             <div class="text-lg md:text-2xl font-extrabold text-slate-900 mt-1" id="kpi-faturamento">R$ 0,00</div>
-            <span class="text-[11px] text-emerald-600 font-semibold block mt-1">Total de vendas</span>
+            <span class="text-[11px] text-emerald-600 font-semibold block mt-1">Total faturado</span>
           </div>
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Recebido (Pago)</span>
             <div class="text-lg md:text-2xl font-extrabold text-emerald-600 mt-1" id="kpi-recebido">R$ 0,00</div>
-            <span class="text-[11px] text-slate-400 font-medium block mt-1">Em caixa</span>
+            <span class="text-[11px] text-slate-400 font-medium block mt-1">Liquidado</span>
           </div>
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">A Receber</span>
@@ -116,13 +125,9 @@
           </div>
         </div>
 
-        <!-- Tabelas de Apoio -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Alerta de Estoque -->
           <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
-              ⚠️ Alerta de Estoque Crítico
-            </h3>
+            <h3 class="font-bold text-slate-800 text-sm mb-3">⚠️ Alerta de Estoque Crítico</h3>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
                 <thead>
@@ -137,11 +142,11 @@
             </div>
           </div>
 
-          <!-- Últimos Pedidos -->
           <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
-              ⏱️ Últimos Pedidos Lançados
-            </h3>
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-slate-800 text-sm">⏱️ Últimos Pedidos (Clique para abrir)</h3>
+              <span class="text-[11px] text-purple-600 cursor-pointer" onclick="setTab('pedidos')">Ver todos</span>
+            </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
                 <thead>
@@ -149,7 +154,7 @@
                     <th class="py-2">Pedido</th>
                     <th class="py-2">Cliente</th>
                     <th class="py-2">Valor</th>
-                    <th class="py-2 text-right">Status</th>
+                    <th class="py-2 text-right">Ação</th>
                   </tr>
                 </thead>
                 <tbody id="lista-ultimos-pedidos" class="divide-y divide-slate-100"></tbody>
@@ -178,6 +183,7 @@
                 <th class="p-3.5">Vencimento</th>
                 <th class="p-3.5">Total</th>
                 <th class="p-3.5 text-center">Status</th>
+                <th class="p-3.5 text-center">Comprovante</th>
               </tr>
             </thead>
             <tbody id="tabela-pedidos-body" class="divide-y divide-slate-100"></tbody>
@@ -185,7 +191,7 @@
         </div>
       </section>
 
-      <!-- ABA 3: PRODUTOS & ESTOQUE -->
+      <!-- ABA 3: ESTOQUE -->
       <section id="tab-estoque" class="hidden space-y-4">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
           <table class="w-full text-left text-sm">
@@ -225,7 +231,7 @@
     </div>
   </main>
 
-  <!-- MODAL: NOVO PEDIDO -->
+  <!-- MODAL 1: NOVO PEDIDO -->
   <div id="modal-pedido" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div class="p-4 border-b flex items-center justify-between bg-slate-50">
@@ -273,18 +279,122 @@
     </div>
   </div>
 
-  <!-- LÓGICA JAVASCRIPT ROBUSTA -->
+  <!-- MODAL 2: VISUALIZAR E IMPRIMIR COMPROVANTE (PDF) -->
+  <div id="modal-comprovante" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 hidden">
+    <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
+      <div class="p-4 border-b flex items-center justify-between bg-slate-50 no-print">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📄</span>
+          <div>
+            <h3 class="font-bold text-slate-900 text-sm">Comprovante de Pedido</h3>
+            <p class="text-xs text-slate-500">Visualização e Impressão em PDF</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="window.print()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 shadow">
+            🖨️ Imprimir / Salvar PDF
+          </button>
+          <button onclick="fecharModalComprovante()" class="text-slate-400 hover:text-slate-700 text-lg font-bold px-2 py-1">✕</button>
+        </div>
+      </div>
+
+      <!-- ÁREA IMPRIMÍVEL DO COMPROVANTE -->
+      <div id="comprovante-print-area" class="p-6 md:p-8 overflow-y-auto space-y-6 text-sm text-slate-800 bg-white">
+        <!-- Cabeçalho da Empresa -->
+        <div class="text-center border-b pb-4">
+          <h2 class="text-lg md:text-xl font-black uppercase tracking-wider text-purple-900">Açaí & Sorvetes Artesanais</h2>
+          <p class="text-xs text-slate-500">Documento de Venda e Emissão de Pedido • Simples Conferência</p>
+        </div>
+
+        <!-- Identificação do Pedido -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-xl border text-xs">
+          <div>
+            <span class="text-slate-400 block font-semibold">Nº DO PEDIDO</span>
+            <strong id="comp-id" class="text-base text-purple-700 font-mono">PED-0000</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-semibold">DATA EMISSÃO</span>
+            <strong id="comp-data">--/--/----</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-semibold">VENCIMENTO</span>
+            <strong id="comp-vencimento">--/--/----</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block font-semibold">STATUS</span>
+            <span id="comp-status" class="inline-block px-2 py-0.5 rounded font-bold">Pendente</span>
+          </div>
+        </div>
+
+        <!-- Dados do Cliente -->
+        <div class="border rounded-xl p-4 space-y-2 text-xs">
+          <h4 class="font-bold text-slate-700 uppercase tracking-wide border-b pb-1 text-[11px]">1. Dados do Cliente / Revendedor</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
+            <div><span class="text-slate-400">Nome:</span> <strong id="comp-cliente-nome"></strong></div>
+            <div><span class="text-slate-400">ID Cliente:</span> <span id="comp-cliente-id" class="font-mono"></span></div>
+            <div><span class="text-slate-400">CPF / CNPJ:</span> <span id="comp-cliente-cpf"></span></div>
+            <div><span class="text-slate-400">Contato:</span> <span id="comp-cliente-tel"></span></div>
+            <div class="md:col-span-2"><span class="text-slate-400">Endereço:</span> <span id="comp-cliente-end"></span></div>
+          </div>
+        </div>
+
+        <!-- Tabela de Itens -->
+        <div class="border rounded-xl overflow-hidden">
+          <div class="bg-slate-50 p-2.5 font-bold uppercase text-[11px] text-slate-700 border-b">
+            2. Itens do Pedido
+          </div>
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100/60 text-slate-500 uppercase border-b text-[10px]">
+              <tr>
+                <th class="p-2.5">SKU</th>
+                <th class="p-2.5">Descrição</th>
+                <th class="p-2.5 text-center">Qtd</th>
+                <th class="p-2.5 text-right">Unitário</th>
+                <th class="p-2.5 text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="comp-tabela-itens" class="divide-y divide-slate-100"></tbody>
+          </table>
+          <div class="p-3 bg-slate-50 flex justify-between items-center border-t">
+            <span class="font-bold uppercase text-slate-600 text-xs">Total do Pedido:</span>
+            <span id="comp-total" class="text-base font-extrabold text-slate-900">R$ 0,00</span>
+          </div>
+        </div>
+
+        <!-- Observações e Assinaturas -->
+        <div class="text-[11px] text-slate-500 italic pt-1">
+          Observações: Documento gerado automaticamente para simples conferência e entrega de mercadoria.
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 pt-8 text-center text-xs">
+          <div>
+            <div class="border-t border-slate-400 pt-1.5 font-medium">Assinatura do Emissor / Distribuidora</div>
+          </div>
+          <div>
+            <div class="border-t border-slate-400 pt-1.5 font-medium">Assinatura do Cliente / Recebedor</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-slate-50 border-t flex justify-end gap-2 no-print">
+        <button onclick="fecharModalComprovante()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">
+          Fechar
+        </button>
+        <button onclick="window.print()" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold flex items-center gap-1">
+          🖨️ Imprimir Comprovante
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Cole a URL do Apps Script aqui caso queira sincronização na nuvem
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwx7TBgZMSZhdTyxiDnrdjwYt736usP33kFN6pJhV6nj4zTxst6KeDOFsNJD53CIj1fng/exec";
 
-    // Banco de dados inicial (Baseado na sua planilha)
     let bancoDados = {
       clientes: [
         { id: "CLI-001", nome: "Mariana Silveira Costa", cpf: "123.456.789-01", contato: "(11) 98765-4321", endereco: "Av. Paulista, 1500, São Paulo/SP" },
         { id: "CLI-002", nome: "Lucas Henrique de Oliveira", cpf: "234.567.890-12", contato: "(11) 97654-3210", endereco: "Rua Augusta, 780, São Paulo/SP" },
         { id: "CLI-003", nome: "Beatriz Fernandes Santos", cpf: "345.678.901-23", contato: "(11) 96543-2109", endereco: "Rua Oscar Freire, 320, São Paulo/SP" },
-        { id: "CLI-004", nome: "Gabriel Souza Ribeiro", cpf: "456.789.012-34", contato: "(11) 95432-1098", endereco: "Alameda Santos, 1200, São Paulo/SP" },
         { id: "CLI-010", nome: "Felipe Nogueira Ramos", cpf: "012.345.678-90", contato: "(11) 98776-5432", endereco: "Av. Faria Lima, 2000, São Paulo/SP" }
       ],
       produtos: [
@@ -294,14 +404,26 @@
         { sku: "SKU-AC04", nome: "Açaí Trufado Especial 500ml", categoria: "Açaí", preco: 26.50, estoque: 45, statusEstoque: "Estoque Normal" },
         { sku: "SKU-AC06", nome: "Barca de Açaí Família 1.2L", categoria: "Açaí", preco: 55.00, estoque: 18, statusEstoque: "Estoque Baixo" },
         { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", categoria: "Sorvete", preco: 34.90, estoque: 25, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-SV02", nome: "Sorvete de Pistache Italiano 1L", categoria: "Sorvete", preco: 42.00, estoque: 20, statusEstoque: "Estoque Baixo" },
-        { sku: "SKU-SV05", nome: "Picolé Artesanal Frutas Vermelhas", categoria: "Picolé", preco: 9.50, estoque: 50, statusEstoque: "Estoque Normal" }
+        { sku: "SKU-SV02", nome: "Sorvete de Pistache Italiano 1L", categoria: "Sorvete", preco: 42.00, estoque: 20, statusEstoque: "Estoque Baixo" }
       ],
       pedidos: [
-        { id: "PED-1001", data: "2026-04-05", idCliente: "CLI-001", cliente: "Mariana Silveira Costa", total: 517.70, vencimento: "2026-04-20", status: "Pago" },
-        { id: "PED-1007", data: "2026-05-15", idCliente: "CLI-001", cliente: "Mariana Silveira Costa", total: 672.00, vencimento: "2026-05-30", status: "Pendente" },
-        { id: "PED-1014", data: "2026-07-01", idCliente: "CLI-005", cliente: "Camila Martins Duarte", total: 630.00, vencimento: "2026-07-16", status: "Pendente" },
-        { id: "PED-1020", data: "2026-09-22", idCliente: "CLI-010", cliente: "Felipe Nogueira Ramos", total: 227.90, vencimento: "2026-10-07", status: "Pago" }
+        {
+          id: "PED-1020", data: "2026-09-22", idCliente: "CLI-010", cliente: "Felipe Nogueira Ramos", total: 227.90, vencimento: "2026-10-07", status: "Pago",
+          itens: [
+            { sku: "SKU-AC01", nome: "Açaí Tradicional 300ml", quantidade: 1, precoUnitario: 16.00, subtotal: 16.00 },
+            { sku: "SKU-AC02", nome: "Açaí Tradicional 500ml", quantidade: 2, precoUnitario: 22.00, subtotal: 44.00 },
+            { sku: "SKU-AC03", nome: "Açaí Tradicional 700ml", quantidade: 2, precoUnitario: 28.00, subtotal: 56.00 },
+            { sku: "SKU-AC04", nome: "Açaí Trufado Especial 500ml", quantidade: 2, precoUnitario: 26.50, subtotal: 53.00 },
+            { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", quantidade: 1, precoUnitario: 34.90, subtotal: 34.90 }
+          ]
+        },
+        {
+          id: "PED-1001", data: "2026-04-05", idCliente: "CLI-001", cliente: "Mariana Silveira Costa", total: 517.70, vencimento: "2026-04-20", status: "Pago",
+          itens: [
+            { sku: "SKU-AC02", nome: "Açaí Tradicional 500ml", quantidade: 4, precoUnitario: 22.00, subtotal: 88.00 },
+            { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", quantidade: 1, precoUnitario: 34.90, subtotal: 34.90 }
+          ]
+        }
       ]
     };
 
@@ -309,8 +431,7 @@
     const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     function toggleMobileMenu() {
-      const sb = document.getElementById('sidebar');
-      sb.classList.toggle('hidden');
+      document.getElementById('sidebar').classList.toggle('hidden');
     }
 
     function setTab(tab) {
@@ -334,14 +455,12 @@
         document.getElementById('page-title').innerText = titulos[tab];
       }
 
-      // Fecha sidebar no celular ao escolher aba
       if (window.innerWidth < 768) {
         document.getElementById('sidebar').classList.add('hidden');
       }
     }
 
     function renderizar() {
-      // 1. Métricas
       let fat = 0, pago = 0, pend = 0;
       bancoDados.pedidos.forEach(p => {
         fat += p.total;
@@ -355,7 +474,7 @@
       document.getElementById('kpi-ticket').innerText = fmt(bancoDados.pedidos.length ? (fat / bancoDados.pedidos.length) : 0);
       document.getElementById('kpi-qtd-pedidos').innerText = bancoDados.pedidos.length + " pedidos realizados";
 
-      // 2. Alerta Estoque
+      // Alerta Estoque
       const alertaBody = document.getElementById('lista-alerta-estoque');
       alertaBody.innerHTML = '';
       bancoDados.produtos.filter(p => p.estoque <= 25).forEach(p => {
@@ -368,28 +487,27 @@
         `;
       });
 
-      // 3. Últimos Pedidos
+      // Últimos Pedidos no Dashboard
       const ultimosBody = document.getElementById('lista-ultimos-pedidos');
       ultimosBody.innerHTML = '';
       bancoDados.pedidos.slice(-5).reverse().forEach(p => {
         ultimosBody.innerHTML += `
-          <tr>
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="verComprovante('${p.id}')">
             <td class="py-2 font-mono font-bold text-purple-600 text-xs">${p.id}</td>
             <td class="py-2 text-slate-700">${p.cliente}</td>
             <td class="py-2 font-bold">${fmt(p.total)}</td>
             <td class="py-2 text-right">
-              <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${p.status === 'Pago' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                ${p.status}
-              </span>
+              <button class="text-xs bg-purple-50 text-purple-700 font-bold px-2 py-1 rounded border border-purple-200 hover:bg-purple-100">
+                📄 Ver
+              </button>
             </td>
           </tr>
         `;
       });
 
-      // 4. Tabela de Pedidos
       filtrarPedidos();
 
-      // 5. Tabela de Produtos
+      // Produtos
       const estBody = document.getElementById('tabela-estoque-body');
       estBody.innerHTML = '';
       bancoDados.produtos.forEach(p => {
@@ -409,7 +527,7 @@
         `;
       });
 
-      // 6. Clientes
+      // Clientes
       const cliBody = document.getElementById('tabela-clientes-body');
       cliBody.innerHTML = '';
       bancoDados.clientes.forEach(c => {
@@ -424,7 +542,6 @@
         `;
       });
 
-      // Selects do Modal
       popularSelects();
     }
 
@@ -448,9 +565,68 @@
                   ${p.status}
                 </span>
               </td>
+              <td class="p-3.5 text-center">
+                <button onclick="verComprovante('${p.id}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-lg text-xs border border-purple-200 shadow-sm">
+                  📄 Abrir / PDF
+                </button>
+              </td>
             </tr>
           `;
         });
+    }
+
+    // ABRIR COMPROVANTE / GERAR PDF
+    function verComprovante(pedidoId) {
+      const ped = bancoDados.pedidos.find(p => p.id === pedidoId);
+      if (!ped) return;
+
+      const cli = bancoDados.clientes.find(c => c.id === ped.idCliente || c.nome === ped.cliente) || {
+        id: ped.idCliente || '-',
+        nome: ped.cliente,
+        cpf: '-',
+        contato: '-',
+        endereco: '-'
+      };
+
+      document.getElementById('comp-id').innerText = ped.id;
+      document.getElementById('comp-data').innerText = ped.data;
+      document.getElementById('comp-vencimento').innerText = ped.vencimento;
+      
+      const st = document.getElementById('comp-status');
+      st.innerText = ped.status;
+      st.className = `inline-block px-2 py-0.5 rounded font-bold text-xs ${ped.status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+
+      document.getElementById('comp-cliente-nome').innerText = cli.nome;
+      document.getElementById('comp-cliente-id').innerText = cli.id;
+      document.getElementById('comp-cliente-cpf').innerText = cli.cpf;
+      document.getElementById('comp-cliente-tel').innerText = cli.contato;
+      document.getElementById('comp-cliente-end').innerText = cli.endereco;
+
+      const tbody = document.getElementById('comp-tabela-itens');
+      tbody.innerHTML = '';
+      
+      const itens = (ped.itens && ped.itens.length > 0) ? ped.itens : [
+        { sku: "DIVERSOS", nome: "Produtos diversos referente ao pedido " + ped.id, quantidade: 1, precoUnitario: ped.total, subtotal: ped.total }
+      ];
+
+      itens.forEach(it => {
+        tbody.innerHTML += `
+          <tr>
+            <td class="p-2.5 font-mono text-slate-400">${it.sku}</td>
+            <td class="p-2.5 font-medium text-slate-800">${it.nome}</td>
+            <td class="p-2.5 text-center font-bold">${it.quantidade}</td>
+            <td class="p-2.5 text-right">${fmt(it.precoUnitario)}</td>
+            <td class="p-2.5 text-right font-bold text-slate-900">${fmt(it.subtotal)}</td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('comp-total').innerText = fmt(ped.total);
+      document.getElementById('modal-comprovante').classList.remove('hidden');
+    }
+
+    function fecharModalComprovante() {
+      document.getElementById('modal-comprovante').classList.add('hidden');
     }
 
     function popularSelects() {
@@ -515,7 +691,7 @@
       document.getElementById('modal-total-pedido').innerText = fmt(tot);
     }
 
-    function salvarPedido() {
+    async function salvarPedido() {
       const idCli = document.getElementById('modal-select-cliente').value;
       if (!idCli) return alert("Selecione um cliente!");
       if (!carrinho.length) return alert("Adicione ao menos um item ao pedido!");
@@ -525,18 +701,45 @@
       const novoId = "PED-" + (1001 + bancoDados.pedidos.length);
       const hoje = new Date().toISOString().substring(0, 10);
 
-      // Adiciona pedido
-      bancoDados.pedidos.push({
+      const novoPedido = {
         id: novoId,
         data: hoje,
         idCliente: cli.id,
         cliente: cli.nome,
         total: tot,
         vencimento: hoje,
-        status: "Pendente"
-      });
+        status: "Pendente",
+        itens: carrinho.map(c => ({
+          sku: c.sku,
+          nome: c.nome,
+          quantidade: c.qtd,
+          precoUnitario: c.preco,
+          subtotal: c.subtotal
+        }))
+      };
 
-      // Baixa no estoque
+      if (SCRIPT_URL) {
+        try {
+          fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "criar_pedido",
+              idCliente: cli.id,
+              nomeCliente: cli.nome,
+              total: tot,
+              vencimento: hoje,
+              status: "Pendente",
+              itens: novoPedido.itens
+            })
+          });
+        } catch (e) {
+          console.warn("Erro ao salvar no Apps Script:", e);
+        }
+      }
+
+      bancoDados.pedidos.push(novoPedido);
       carrinho.forEach(item => {
         const prod = bancoDados.produtos.find(p => p.sku === item.sku);
         if (prod) prod.estoque = Math.max(0, prod.estoque - item.qtd);
@@ -544,25 +747,26 @@
 
       fecharModalPedido();
       renderizar();
-      alert(`Pedido ${novoId} registrado com sucesso!`);
+      
+      // Abre o comprovante direto após salvar
+      verComprovante(novoId);
     }
 
     async function carregarDados() {
-      if (SCRIPT_URL && SCRIPT_URL !== "") {
+      if (SCRIPT_URL) {
         try {
           const resp = await fetch(SCRIPT_URL);
           const data = await resp.json();
-          if (data && data.pedidos) {
+          if (data && data.pedidos && data.pedidos.length > 0) {
             bancoDados = data;
           }
         } catch (e) {
-          console.warn("Rodando com dados locais contingenciais:", e);
+          console.warn("Usando contingência de dados:", e);
         }
       }
       renderizar();
     }
 
-    // Inicialização direta
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' });
       carregarDados();
