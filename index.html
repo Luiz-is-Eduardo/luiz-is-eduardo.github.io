@@ -44,7 +44,7 @@
     </div>
   </header>
 
-  <!-- BARRA LATERAL (SIDEBAR) -->
+  <!-- SIDEBAR -->
   <aside id="sidebar" class="hidden md:flex flex-col justify-between w-full md:w-64 bg-slate-900 text-slate-300 md:min-h-screen shrink-0 z-20">
     <div>
       <div class="h-20 hidden md:flex items-center px-6 gap-3 border-b border-slate-800 bg-slate-950/40">
@@ -78,15 +78,15 @@
         ➕ Emitir Novo Pedido
       </button>
       <div class="text-[11px] text-slate-400 flex items-center justify-between">
-        <span class="flex items-center gap-1.5">
+        <span class="flex items-center gap-1.5" id="conexao-status">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse"></span> Sheets Conectado
         </span>
-        <button onclick="carregarDados()" class="text-purple-400 hover:underline">Atualizar</button>
+        <button onclick="carregarDados(true)" class="text-purple-400 hover:underline">Atualizar</button>
       </div>
     </div>
   </aside>
 
-  <!-- ÁREA DE CONTEÚDO PRINCIPAL -->
+  <!-- CONTEÚDO PRINCIPAL -->
   <main class="flex-1 flex flex-col min-w-0">
     <header class="hidden md:flex h-16 bg-white border-b border-slate-200 px-8 items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
@@ -106,7 +106,7 @@
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Faturamento</span>
             <div class="text-lg md:text-2xl font-extrabold text-slate-900 mt-1" id="kpi-faturamento">R$ 0,00</div>
-            <span class="text-[11px] text-emerald-600 font-semibold block mt-1">Total faturado</span>
+            <span class="text-[11px] text-emerald-600 font-semibold block mt-1">Total de vendas</span>
           </div>
           <div class="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm">
             <span class="text-xs font-semibold text-slate-400 uppercase">Recebido (Pago)</span>
@@ -144,8 +144,8 @@
 
           <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
             <div class="flex justify-between items-center mb-3">
-              <h3 class="font-bold text-slate-800 text-sm">⏱️ Últimos Pedidos (Clique para abrir)</h3>
-              <span class="text-[11px] text-purple-600 cursor-pointer" onclick="setTab('pedidos')">Ver todos</span>
+              <h3 class="font-bold text-slate-800 text-sm">⏱️ Últimos Pedidos</h3>
+              <span class="text-[11px] text-purple-600 cursor-pointer font-bold" onclick="setTab('pedidos')">Ver todos</span>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
@@ -154,6 +154,7 @@
                     <th class="py-2">Pedido</th>
                     <th class="py-2">Cliente</th>
                     <th class="py-2">Valor</th>
+                    <th class="py-2 text-center">Status (Clique)</th>
                     <th class="py-2 text-right">Ação</th>
                   </tr>
                 </thead>
@@ -182,7 +183,7 @@
                 <th class="p-3.5">Cliente</th>
                 <th class="p-3.5">Vencimento</th>
                 <th class="p-3.5">Total</th>
-                <th class="p-3.5 text-center">Status</th>
+                <th class="p-3.5 text-center">Status (Clique p/ mudar)</th>
                 <th class="p-3.5 text-center">Comprovante</th>
               </tr>
             </thead>
@@ -279,7 +280,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: VISUALIZAR E IMPRIMIR COMPROVANTE (PDF) -->
+  <!-- MODAL 2: COMPROVANTE (PDF) -->
   <div id="modal-comprovante" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4 hidden">
     <div class="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
       <div class="p-4 border-b flex items-center justify-between bg-slate-50 no-print">
@@ -298,15 +299,12 @@
         </div>
       </div>
 
-      <!-- ÁREA IMPRIMÍVEL DO COMPROVANTE -->
       <div id="comprovante-print-area" class="p-6 md:p-8 overflow-y-auto space-y-6 text-sm text-slate-800 bg-white">
-        <!-- Cabeçalho da Empresa -->
         <div class="text-center border-b pb-4">
           <h2 class="text-lg md:text-xl font-black uppercase tracking-wider text-purple-900">Açaí & Sorvetes Artesanais</h2>
           <p class="text-xs text-slate-500">Documento de Venda e Emissão de Pedido • Simples Conferência</p>
         </div>
 
-        <!-- Identificação do Pedido -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-xl border text-xs">
           <div>
             <span class="text-slate-400 block font-semibold">Nº DO PEDIDO</span>
@@ -322,11 +320,10 @@
           </div>
           <div>
             <span class="text-slate-400 block font-semibold">STATUS</span>
-            <span id="comp-status" class="inline-block px-2 py-0.5 rounded font-bold">Pendente</span>
+            <button id="comp-status-btn" onclick="alternarStatusComprovante()" class="px-2 py-0.5 rounded font-bold transition">Pendente</button>
           </div>
         </div>
 
-        <!-- Dados do Cliente -->
         <div class="border rounded-xl p-4 space-y-2 text-xs">
           <h4 class="font-bold text-slate-700 uppercase tracking-wide border-b pb-1 text-[11px]">1. Dados do Cliente / Revendedor</h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
@@ -338,7 +335,6 @@
           </div>
         </div>
 
-        <!-- Tabela de Itens -->
         <div class="border rounded-xl overflow-hidden">
           <div class="bg-slate-50 p-2.5 font-bold uppercase text-[11px] text-slate-700 border-b">
             2. Itens do Pedido
@@ -361,7 +357,6 @@
           </div>
         </div>
 
-        <!-- Observações e Assinaturas -->
         <div class="text-[11px] text-slate-500 italic pt-1">
           Observações: Documento gerado automaticamente para simples conferência e entrega de mercadoria.
         </div>
@@ -390,45 +385,11 @@
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwx7TBgZMSZhdTyxiDnrdjwYt736usP33kFN6pJhV6nj4zTxst6KeDOFsNJD53CIj1fng/exec";
 
-    let bancoDados = {
-      clientes: [
-        { id: "CLI-001", nome: "Mariana Silveira Costa", cpf: "123.456.789-01", contato: "(11) 98765-4321", endereco: "Av. Paulista, 1500, São Paulo/SP" },
-        { id: "CLI-002", nome: "Lucas Henrique de Oliveira", cpf: "234.567.890-12", contato: "(11) 97654-3210", endereco: "Rua Augusta, 780, São Paulo/SP" },
-        { id: "CLI-003", nome: "Beatriz Fernandes Santos", cpf: "345.678.901-23", contato: "(11) 96543-2109", endereco: "Rua Oscar Freire, 320, São Paulo/SP" },
-        { id: "CLI-010", nome: "Felipe Nogueira Ramos", cpf: "012.345.678-90", contato: "(11) 98776-5432", endereco: "Av. Faria Lima, 2000, São Paulo/SP" }
-      ],
-      produtos: [
-        { sku: "SKU-AC01", nome: "Açaí Tradicional 300ml", categoria: "Açaí", preco: 16.00, estoque: 85, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-AC02", nome: "Açaí Tradicional 500ml", categoria: "Açaí", preco: 22.00, estoque: 110, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-AC03", nome: "Açaí Tradicional 700ml", categoria: "Açaí", preco: 28.00, estoque: 60, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-AC04", nome: "Açaí Trufado Especial 500ml", categoria: "Açaí", preco: 26.50, estoque: 45, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-AC06", nome: "Barca de Açaí Família 1.2L", categoria: "Açaí", preco: 55.00, estoque: 18, statusEstoque: "Estoque Baixo" },
-        { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", categoria: "Sorvete", preco: 34.90, estoque: 25, statusEstoque: "Estoque Normal" },
-        { sku: "SKU-SV02", nome: "Sorvete de Pistache Italiano 1L", categoria: "Sorvete", preco: 42.00, estoque: 20, statusEstoque: "Estoque Baixo" }
-      ],
-      pedidos: [
-        {
-          id: "PED-1020", data: "2026-09-22", idCliente: "CLI-010", cliente: "Felipe Nogueira Ramos", total: 227.90, vencimento: "2026-10-07", status: "Pago",
-          itens: [
-            { sku: "SKU-AC01", nome: "Açaí Tradicional 300ml", quantidade: 1, precoUnitario: 16.00, subtotal: 16.00 },
-            { sku: "SKU-AC02", nome: "Açaí Tradicional 500ml", quantidade: 2, precoUnitario: 22.00, subtotal: 44.00 },
-            { sku: "SKU-AC03", nome: "Açaí Tradicional 700ml", quantidade: 2, precoUnitario: 28.00, subtotal: 56.00 },
-            { sku: "SKU-AC04", nome: "Açaí Trufado Especial 500ml", quantidade: 2, precoUnitario: 26.50, subtotal: 53.00 },
-            { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", quantidade: 1, precoUnitario: 34.90, subtotal: 34.90 }
-          ]
-        },
-        {
-          id: "PED-1001", data: "2026-04-05", idCliente: "CLI-001", cliente: "Mariana Silveira Costa", total: 517.70, vencimento: "2026-04-20", status: "Pago",
-          itens: [
-            { sku: "SKU-AC02", nome: "Açaí Tradicional 500ml", quantidade: 4, precoUnitario: 22.00, subtotal: 88.00 },
-            { sku: "SKU-SV01", nome: "Sorvete de Ninho Trufado 1L", quantidade: 1, precoUnitario: 34.90, subtotal: 34.90 }
-          ]
-        }
-      ]
-    };
-
+    let bancoDados = { clientes: [], produtos: [], pedidos: [] };
+    let pedidoAtualComprovante = null;
     let carrinho = [];
-    const fmt = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     function toggleMobileMenu() {
       document.getElementById('sidebar').classList.toggle('hidden');
@@ -463,9 +424,10 @@
     function renderizar() {
       let fat = 0, pago = 0, pend = 0;
       bancoDados.pedidos.forEach(p => {
-        fat += p.total;
-        if (p.status === "Pago") pago += p.total;
-        if (p.status === "Pendente") pend += p.total;
+        const val = Number(p.total) || 0;
+        fat += val;
+        if (p.status === "Pago") pago += val;
+        else pend += val;
       });
 
       document.getElementById('kpi-faturamento').innerText = fmt(fat);
@@ -492,12 +454,17 @@
       ultimosBody.innerHTML = '';
       bancoDados.pedidos.slice(-5).reverse().forEach(p => {
         ultimosBody.innerHTML += `
-          <tr class="hover:bg-slate-50 cursor-pointer" onclick="verComprovante('${p.id}')">
+          <tr class="hover:bg-slate-50">
             <td class="py-2 font-mono font-bold text-purple-600 text-xs">${p.id}</td>
             <td class="py-2 text-slate-700">${p.cliente}</td>
             <td class="py-2 font-bold">${fmt(p.total)}</td>
+            <td class="py-2 text-center">
+              <button onclick="alternarStatus('${p.id}')" title="Clique para alternar status" class="text-xs px-2 py-0.5 rounded-full font-bold cursor-pointer transition ${p.status === 'Pago' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
+                ${p.status}
+              </button>
+            </td>
             <td class="py-2 text-right">
-              <button class="text-xs bg-purple-50 text-purple-700 font-bold px-2 py-1 rounded border border-purple-200 hover:bg-purple-100">
+              <button onclick="verComprovante('${p.id}')" class="text-xs bg-purple-50 text-purple-700 font-bold px-2 py-1 rounded border border-purple-200 hover:bg-purple-100">
                 📄 Ver
               </button>
             </td>
@@ -551,7 +518,7 @@
       body.innerHTML = '';
       bancoDados.pedidos
         .filter(p => p.cliente.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))
-        .reverse()
+        .slice().reverse()
         .forEach(p => {
           body.innerHTML += `
             <tr class="hover:bg-slate-50">
@@ -561,9 +528,9 @@
               <td class="p-3.5 text-slate-500">${p.vencimento}</td>
               <td class="p-3.5 font-extrabold text-slate-900">${fmt(p.total)}</td>
               <td class="p-3.5 text-center">
-                <span class="text-xs px-2.5 py-1 rounded-full font-bold ${p.status === 'Pago' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                  ${p.status}
-                </span>
+                <button onclick="alternarStatus('${p.id}')" title="Clique para mudar o status" class="text-xs px-2.5 py-1 rounded-full font-bold transition shadow-sm cursor-pointer ${p.status === 'Pago' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}">
+                  ${p.status} ⇄
+                </button>
               </td>
               <td class="p-3.5 text-center">
                 <button onclick="verComprovante('${p.id}')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-lg text-xs border border-purple-200 shadow-sm">
@@ -575,10 +542,54 @@
         });
     }
 
-    // ABRIR COMPROVANTE / GERAR PDF
+    // ALTERAR STATUS DE PAGAMENTO (GRAVA NO SHEETS)
+    async function alternarStatus(pedidoId) {
+      const ped = bancoDados.pedidos.find(p => p.id === pedidoId);
+      if (!ped) return;
+
+      const novoStatus = ped.status === "Pago" ? "Pendente" : "Pago";
+      ped.status = novoStatus;
+      renderizar();
+
+      if (pedidoAtualComprovante && pedidoAtualComprovante.id === pedidoId) {
+        atualizarBotaoStatusComprovante(novoStatus);
+      }
+
+      if (SCRIPT_URL) {
+        try {
+          fetch(SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "alterar_status",
+              pedidoId: pedidoId,
+              novoStatus: novoStatus
+            })
+          });
+        } catch (e) {
+          console.warn("Erro ao salvar status no Sheets:", e);
+        }
+      }
+    }
+
+    function alternarStatusComprovante() {
+      if (pedidoAtualComprovante) {
+        alternarStatus(pedidoAtualComprovante.id);
+      }
+    }
+
+    function atualizarBotaoStatusComprovante(status) {
+      const btn = document.getElementById('comp-status-btn');
+      btn.innerText = status + " (Clique p/ mudar)";
+      btn.className = `px-2 py-0.5 rounded font-bold text-xs cursor-pointer ${status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+    }
+
+    // COMPROVANTE
     function verComprovante(pedidoId) {
       const ped = bancoDados.pedidos.find(p => p.id === pedidoId);
       if (!ped) return;
+      pedidoAtualComprovante = ped;
 
       const cli = bancoDados.clientes.find(c => c.id === ped.idCliente || c.nome === ped.cliente) || {
         id: ped.idCliente || '-',
@@ -592,9 +603,7 @@
       document.getElementById('comp-data').innerText = ped.data;
       document.getElementById('comp-vencimento').innerText = ped.vencimento;
       
-      const st = document.getElementById('comp-status');
-      st.innerText = ped.status;
-      st.className = `inline-block px-2 py-0.5 rounded font-bold text-xs ${ped.status === 'Pago' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`;
+      atualizarBotaoStatusComprovante(ped.status);
 
       document.getElementById('comp-cliente-nome').innerText = cli.nome;
       document.getElementById('comp-cliente-id').innerText = cli.id;
@@ -627,6 +636,7 @@
 
     function fecharModalComprovante() {
       document.getElementById('modal-comprovante').classList.add('hidden');
+      pedidoAtualComprovante = null;
     }
 
     function popularSelects() {
@@ -747,21 +757,22 @@
 
       fecharModalPedido();
       renderizar();
-      
-      // Abre o comprovante direto após salvar
       verComprovante(novoId);
     }
 
-    async function carregarDados() {
+    async function carregarDados(forceAlert) {
       if (SCRIPT_URL) {
         try {
           const resp = await fetch(SCRIPT_URL);
           const data = await resp.json();
           if (data && data.pedidos && data.pedidos.length > 0) {
             bancoDados = data;
+            renderizar();
+            if (forceAlert) alert("Dados atualizados com sucesso da planilha!");
+            return;
           }
         } catch (e) {
-          console.warn("Usando contingência de dados:", e);
+          console.warn("Aguardando sincronização:", e);
         }
       }
       renderizar();
